@@ -25,7 +25,7 @@ public class CurlNoiseTest : MonoBehaviour {
         var x = Mathf.Cos(Time.time * speed);
         var y = Mathf.Sin(Time.time * speed);
         go.transform.localPosition += new Vector3(x, y, 0);
-        var curlNoise = curlNoiseGen.Noise(go.transform.localPosition * 0.05f) * 0.6f;
+        var curlNoise = curlNoiseGen.Noise3D(go.transform.localPosition * 0.05f) * 0.6f;
         //curlNoise += new Vector3(0.1f, 0, 0);
         go.transform.localPosition += curlNoise * 1f;
         go.transform.localScale = this.transform.localScale;

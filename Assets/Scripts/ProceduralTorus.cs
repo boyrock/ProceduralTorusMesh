@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -29,14 +30,30 @@ public class ProceduralTorus : MonoBehaviour {
 
     MeshFilter filter;
 
+    CurlNoiseGenerator curlNoise;
+
+    Vector3 velocity;
+
+
     // Use this for initialization
     void Start ()
     {
+        //global_value += 0.0001f;
+
+        //rand = global_value;// Random.Range(-0.1f, 0.1f);
+
+        velocity = new Vector3(0, 0.06f,0f );
+        curlNoise = new CurlNoiseGenerator();
 
         filter = gameObject.GetComponent<MeshFilter>();
         if (filter == null) filter = gameObject.AddComponent<MeshFilter>();
 
         Generate();
+    }
+
+    internal void SetColor(Color color)
+    {
+        this.GetComponent<Renderer>().material.SetColor("_Color", color);
     }
 
     private void SetMesh()
@@ -76,7 +93,8 @@ public class ProceduralTorus : MonoBehaviour {
 
         count = 0;
 
-        prev_position = GetPosition(500 - 1);
+        //prev_position = GetPosition(500 - 1);
+        prev_position = Vector3.zero;
         var position = GetPosition(0);
         var normal = GetNormal(position);
 
@@ -92,9 +110,9 @@ public class ProceduralTorus : MonoBehaviour {
 
     Vector3 GetNormal(Vector3 position)
     {
-        var direction = position - prev_position;
+        var direction = (prev_position - position).normalized;
 
-        if (direction == Vector3.zero)
+        if (direction.sqrMagnitude == 0)
             direction = Vector3.up;
 
         var lookAt = Quaternion.LookRotation(direction, prev_normal);
@@ -104,29 +122,59 @@ public class ProceduralTorus : MonoBehaviour {
         return n;
     }
 
+    [SerializeField]
+    [Range(0,3f)]
+    float aa;
+
+    [SerializeField]
+    [Range(0, 1f)]
+    float bb;
     Vector3 GetPosition(float tt)
     {
         int nlongitude = 50;
         int nmeridian = 60;
         float NSEGMENTS = 5000;
         var t = tt * Mathf.PI * 2f * nmeridian / NSEGMENTS;
-        float x = Mathf.Cos(t) * (1.0f + Mathf.Cos(nlongitude * t / nmeridian) / 2.0f);
-        float y = Mathf.Sin(t) * (1.0f + Mathf.Cos(nlongitude * t / nmeridian) / 2.0f);
-        float z = Mathf.Sin(nlongitude * t / nmeridian) / 2.0f;
 
+        float x = 0;
+        float y = tt * 0.005f;
+        float z = 0;
+
+        //x = Mathf.Cos(t) * (1.0f + Mathf.Cos(nlongitude * t / nmeridian) / 2.0f);
+        //y = Mathf.Sin(t) * (1.0f + Mathf.Cos(nlongitude * t / nmeridian) / 2.0f);
+        //z = Mathf.Sin(nlongitude * t / nmeridian) / 2.0f;
+
+
+        //particle[i].force.x += Mathf.PerlinNoise(prev_position.x * aa, prev_position.y * aa, 1.352 + time);
+        //particle[i].force.x += Mathf.PerlinNoise(prev_position.x * aa, prev_position.y * aa, 12.814 + time);
+
+        var p = new Vector3(x, y, z);
+        //var noise = curlNoise.Noise2D((this.transform.position + prev_position) * aa) * bb;
+        var noise = curlNoise.Noise3D((this.transform.position + prev_position) * aa) * bb;
+
+        //var nnoise = new Vector3(noise.x, noise.y, 0) + velocity;
+        var nnoise = noise + velocity;
+
+        //noise += new Vector3(rand, 0, 0);
         //float x = t * 0.2f;// Mathf.Cos(t) * (1.0f + Mathf.Cos(nlongitude * t / nmeridian) / 2.0f);
         //float y = Mathf.Sin(t * 1f);
         //float z = Mathf.Cos(t * 1f);
 
-        return new Vector3(x, y, z) * 200f;
+        return (prev_position + new Vector3(nnoise.x, nnoise.y, nnoise.z));
     }
+
+    float rand;
 
     void Branch(Vector3 position, Vector3 nor)
     {
         var texCoord = Vector2.zero;
 
         //Debug.Log("radius : " + radius);
-        var direction = (prev_position - position);
+        var direction = (prev_position - position).normalized;
+        if (direction.sqrMagnitude == 0)
+            direction = Vector3.down;
+
+        //Debug.Log("direction : " + direction);
 
         texCoord.y = (float)count / (float)(maxNumSegments);
         for (int j = 0; j < numberOfSides; j++)
@@ -208,6 +256,6 @@ public class ProceduralTorus : MonoBehaviour {
     void Update () {
 
         //maxNumSegments = (int)(((Mathf.Sin(Time.time * 0.5f) + 1) * 0.5f) * 500);
-        Generate();
+        //Generate();
     }
 }
