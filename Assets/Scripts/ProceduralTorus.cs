@@ -255,6 +255,9 @@ public class ProceduralTorus : MonoBehaviour {
     // Update is called once per frame
     void Update () {
 
+        //var lookAt = Quaternion.LookRotation(new Vector3(0, 1, 0), new Vector3(0, 1, 0));
+
+        //Debug.Log("lookAt : " + lookAt);
         //maxNumSegments = (int)(((Mathf.Sin(Time.time * 0.5f) + 1) * 0.5f) * 500);
         //Generate();
     }

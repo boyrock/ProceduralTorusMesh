@@ -39,6 +39,15 @@ public static class Perlin
         return Noise(coord.x, coord.y);
     }
 
+    public static Vector3 Noise3D(Vector3 v)
+    {
+        float s = Noise(v.x, v.y, v.z);
+        float s1 = Noise(new Vector3(v.y - 19.1f, v.z + 33.4f, v.x + 47.2f));
+        float s2 = Noise(new Vector3(v.z + 74.2f, v.x - 124.5f, v.y + 99.4f));
+        Vector3 c = new Vector3(s, s1, s2);
+        return c;
+    }
+
     public static float Noise(float x, float y, float z)
     {
         var X = Mathf.FloorToInt(x) & 0xff;
