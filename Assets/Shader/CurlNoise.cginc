@@ -9,7 +9,7 @@ float3 noiseVec3(float3 x) {
 }
 
 float3 curlNoise(float3 p) {
-	const float e = 0.0009;// 0.0009765625;
+	const float e = 0.01001;// 0.0009765625;
 
 	float3 dx = float3(e, 0.0, 0.0);
 	float3 dy = float3(0.0, e, 0.0);
