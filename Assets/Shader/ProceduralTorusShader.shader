@@ -4,7 +4,6 @@
 	{
 		_MainTex ("Texture", 2D) = "white" {}
 		_RimColor("_RimColor", Color) = (1,1,1,1)
-		_Color("_Color", Color) = (1,1,1,1)
 		_SpecColor("SpecColor", Color) = (1.0, 1.0, 1.0, 1.0)
 		_Shininess("Shininess", Float) = 10
 		_RimPower("Rim Power", Range(0.1, 10.0)) = 3.0
@@ -55,7 +54,6 @@
 
 
 			float4 _RimColor;
-			float4 _Color;
 			float _Shininess;
 			float _RimPower;
 
@@ -98,7 +96,7 @@
 				int indexOfSegment = idx / 10;
 				int _MaxSegment = 300;
 
-				float tt = (sin(_Time.y * 0.5 + v.instanceId * 0.005 + (indexOfSegment / (_MaxSegment + 1)) * 0.01) + 1) * 0.5;
+				float tt = (sin(_Time.y * 0.5 + v.instanceId * 0.002 + (indexOfSegment / (_MaxSegment + 1)) * 0.001) + 1) * 0.5;
 				o.color = _ColorBuffer[tt * 99];
 
 				return o;

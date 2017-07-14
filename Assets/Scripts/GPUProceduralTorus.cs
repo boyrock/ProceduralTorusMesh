@@ -21,21 +21,7 @@ public class GPUProceduralTorus : MonoBehaviour {
     [Range(0, 20)]
     int numOfSides;
 
-    //Material _mat;
-    //Material mat
-    //{
-    //    get
-    //    {
-    //        if(_mat == null)
-    //        {
-    //            _mat = new Material(shader);
-    //        }
-
-    //        return _mat;
-    //    }
-    //}
-
-        [SerializeField]
+    [SerializeField]
     Material mat;
 
     ComputeBuffer indexBuffer;
@@ -51,23 +37,12 @@ public class GPUProceduralTorus : MonoBehaviour {
     int[] indices;
 
     [SerializeField]
-    [Range(0, 3f)]
-    float aa;
-
-    [SerializeField]
-    [Range(0, 1f)]
-    float bb;
-
-    [SerializeField]
     ComputeShader cs;
 
     public float radius { get; set; }
     public float length { get; set; }
     public float noiseFreq { get; set; }
     public float colorChangeSpeed { get; set; }
-
-    //[SerializeField]
-    //Gradient gradientColor;
 
     [SerializeField]
     Gradient[] gradientColors;
@@ -79,12 +54,14 @@ public class GPUProceduralTorus : MonoBehaviour {
     int updateVertex_kernelIdx;
     int applyNoise_kernelIdx;
 
+    List<Color[]> colorsArr;
+
     // Use this for initialization
     void Start ()
     {
         length = 0.7f;
-        noiseFreq = 0.25f;
-        radius = 0.12f;
+        noiseFreq = 0f;
+        radius = 0.2f;
         colorChangeSpeed = 0.1f;
 
         InitKernelIndex();
@@ -125,19 +102,25 @@ public class GPUProceduralTorus : MonoBehaviour {
         }
     }
 
-    List<Color[]> colorsArr;
-
-    int colorArrIndex;
-
     void ChangeColor(float t)
     {
-        int fromIndex = (int)t;// colorArrIndex;
+        int fromIndex = (int)t;
         int toIndex = (int)t + 1 >= colorsArr.Count ? 0 : (int)t + 1;
-
         float tt = t % 1.0f;
-
         colors = LerpColors(colorsArr[fromIndex], colorsArr[toIndex], tt);
     }
+    Color[] LerpColors(Color[] from, Color[] to, float t)
+    {
+        Color[] colors = new Color[from.Length];
+
+        for (int i = 0; i < from.Length; i++)
+        {
+            colors[i] = Color.Lerp(from[i], to[i], t);
+        }
+
+        return colors;
+    }
+
 
     private void InitKernelIndex()
     {
@@ -205,8 +188,6 @@ public class GPUProceduralTorus : MonoBehaviour {
 
     private void OnRenderObject()
     {
-        //UpdateColorBuffer();
-
         var color_t = Mathf.Repeat(Time.time * colorChangeSpeed, gradientColors.Length);
         ChangeColor(color_t);
         colorBuf.SetData(colors);
@@ -235,21 +216,10 @@ public class GPUProceduralTorus : MonoBehaviour {
         Graphics.DrawProcedural(MeshTopology.Triangles, indices.Length, count);
     }
 
-    Color[] LerpColors(Color[] from, Color[] to, float t)
-    {
-        Color[] colors = new Color[from.Length];
-
-        for (int i = 0; i < from.Length; i++)
-        {
-            colors[i] = Color.Lerp(from[i], to[i], t);
-        }
-
-        return colors;
-    }
-
     // Update is called once per frame
     void Update () {
     }
+
     struct TorusVertex
     {
         public Vector3 pos;
