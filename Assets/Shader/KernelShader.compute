@@ -31,6 +31,7 @@ float _NoiseFreq;
 
 RWStructuredBuffer<Segment> _SegmentBuffer;
 RWStructuredBuffer<TorusVertex> _VertexBuffer;
+RWStructuredBuffer<float3> _InitPosBuffer;
 
 float3 GetNormal(float3 direction, float3 position, float3 prev_normal)
 {
@@ -61,7 +62,7 @@ void UpdateVertex (uint id : SV_DispatchThreadID)
 	float4 rr = AngleAxis(direction, (float)indexOfSide * (360 / numOfSlide));
 	float3 pos = RotateAroundPoint(position + normal * radius, position, rr);
 
-	float t = (sin(_Time * 0.5 + (indexOfSegment / (_MaxSegment + 1)) * 0.003) + 1 ) * 0.5;
+	float t = (sin(_Time * 0.5 + (indexOfSegment / (_MaxSegment + 1)) * 0.0009) + 1 ) * 0.5;
 
 	if (indexOfSegment % (_MaxSegment + 1) / _MaxSegment < (t * _T))
 	{
@@ -78,7 +79,16 @@ void UpdateVertex (uint id : SV_DispatchThreadID)
 [numthreads(8, 1, 1)]
 void ApplyNoise(uint id : SV_DispatchThreadID)
 {
-	_SegmentBuffer[id].pos = _SegmentBuffer[id].initPos + cnoise(float3(_SegmentBuffer[id].initPos.yz * _NoiseFreq, _Time * 0.3)) * 4 * _NoiseFreq;// position;
+	int numOfSlide = _NumOfSlide;
+	int indexOfSegment = id / numOfSlide;
+
+	_SegmentBuffer[id].pos = _SegmentBuffer[id].initPos + cnoise(float3(_SegmentBuffer[id].pos.xy * _NoiseFreq * 0.01, _Time * 0.8)) * 30 * _NoiseFreq;// position;
+}
+
+[numthreads(8, 1, 1)]
+void UpdateSegment(uint id : SV_DispatchThreadID)
+{
+	//_SegmentBuffer[id].pos
 }
 
 [numthreads(16, 1, 1)]
@@ -86,7 +96,7 @@ void InitSegment(uint id : SV_DispatchThreadID)
 {
 	int index = id;
 
-	float3 iniPos = float3(index, index, index);
+	float3 iniPos = _InitPosBuffer[id];// float3(index, index, index);
 	float3 prev_pos = 0;
 	float3 prev_normal = 0;
 
@@ -96,10 +106,18 @@ void InitSegment(uint id : SV_DispatchThreadID)
 	{
 		int ii = id * segmentNum + i;
 
-		prev_pos = _SegmentBuffer[ii - 1].pos;
+		if (i == 0)
+		{
+			prev_pos = iniPos;
+		}
+		else 
+		{
+			prev_pos = _SegmentBuffer[ii - 1].pos;
+		}
+
 		prev_normal = _SegmentBuffer[ii - 1].normal;
 
-		float3 noise = curlNoise((iniPos * 0.05 + prev_pos) * 0.015) * 1.8;
+		float3 noise = curlNoise((id * 0.02 + prev_pos) * 0.01) * 2;
 		float3 nnoise = noise;
 
 		float3 position = prev_pos + nnoise;

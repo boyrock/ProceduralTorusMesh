@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -26,12 +25,14 @@ public class GPUProceduralTorus : MonoBehaviour {
 
     ComputeBuffer indexBuffer;
     ComputeBuffer vertexBuffer;
+    ComputeBuffer initPosBuffer;
     ComputeBuffer segmentBuffer;
     ComputeBuffer colorBuf;
 
     TorusVertex[] vertices;
     Segment[] segments;
     Color[] colors;
+    Vector3[] initPositions;
 
     Vector3[] points;
     int[] indices;
@@ -76,12 +77,16 @@ public class GPUProceduralTorus : MonoBehaviour {
 
         vertices = new TorusVertex[totalVertexNum];
         segments = new Segment[totalSegmentNum];
+        initPositions = new Vector3[count];
 
         for (int i = 0; i < totalSegmentNum; i++)
             segments[i] = new Segment();
 
         for (int i = 0; i < totalVertexNum; i++)
             vertices[i] = new TorusVertex();
+
+        for (int i = 0; i < count; i++)
+            initPositions[i] = Random.insideUnitSphere * 30f;// new Vector3();
 
         SetIndices();
         InitBuffer();
@@ -176,12 +181,16 @@ public class GPUProceduralTorus : MonoBehaviour {
         segmentBuffer = new ComputeBuffer(segments.Length, Marshal.SizeOf(typeof(Segment)));
         segmentBuffer.SetData(segments);
 
+        initPosBuffer = new ComputeBuffer(initPositions.Length, Marshal.SizeOf(typeof(Vector3)));
+        initPosBuffer.SetData(initPositions);
+
         colorBuf = new ComputeBuffer(count, Marshal.SizeOf(typeof(Color)));
     }
 
     private void InitSegments()
     {
         cs.SetFloat("_MaxSegment", maxSegmentNum);
+        cs.SetBuffer(initSegment_kernelIdx, "_InitPosBuffer", initPosBuffer);
         cs.SetBuffer(initSegment_kernelIdx, "_SegmentBuffer", segmentBuffer);
         cs.Dispatch(initSegment_kernelIdx, count / 16 + (count % 16), 1, 1);
     }
@@ -198,6 +207,7 @@ public class GPUProceduralTorus : MonoBehaviour {
         cs.SetFloat("_Time", Time.time);
         cs.SetFloat("_Radius", radius);
 
+
         cs.SetBuffer(updateVertex_kernelIdx, "_VertexBuffer", vertexBuffer);
         cs.SetBuffer(updateVertex_kernelIdx, "_SegmentBuffer", segmentBuffer);
         cs.Dispatch(updateVertex_kernelIdx, totalVertexNum / 8 + (totalVertexNum % 8), 1, 1);
@@ -210,6 +220,7 @@ public class GPUProceduralTorus : MonoBehaviour {
         mat.SetBuffer("_IndexBuffer", indexBuffer);
         mat.SetBuffer("_VertexBuffer", vertexBuffer);
         mat.SetBuffer("_ColorBuffer", colorBuf);
+        mat.SetFloat("_MaxSegment", maxSegmentNum);
         mat.SetInt("_NumVertexOfPerTorus", vertices.Length / count);
         mat.SetInt("_NumIndexOfPerTorus", indices.Length);
 

@@ -61,6 +61,7 @@
 			float4 _MainTex_ST;
 			int _NumVertexOfPerTorus;
 			int _NumIndexOfPerTorus;
+			int _MaxSegment;
 
 			StructuredBuffer<int> _IndexBuffer;
 			StructuredBuffer<TorusVertex> _VertexBuffer;
@@ -94,9 +95,8 @@
 
 
 				int indexOfSegment = idx / 10;
-				int _MaxSegment = 300;
 
-				float tt = (sin(_Time.y * 0.5 + v.instanceId * 0.002 + (indexOfSegment / (_MaxSegment + 1)) * 0.001) + 1) * 0.5;
+				float tt = (sin(_Time.y * 0.5 + v.instanceId * 0.001 + (indexOfSegment / (_MaxSegment + 1)) * 0.001) + 1) * 0.5;
 				o.color = _ColorBuffer[tt * 99];
 
 				return o;
