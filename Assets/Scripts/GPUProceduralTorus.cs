@@ -240,6 +240,7 @@ public class GPUProceduralTorus : MonoBehaviour {
 
     struct Segment
     {
+        public int index;
         public Vector3 initPos;
         public Vector3 pos;
         public Vector3 direction;
