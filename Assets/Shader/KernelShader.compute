@@ -64,7 +64,7 @@ void UpdateVertex (uint id : SV_DispatchThreadID)
 	float4 rr = AngleAxis(direction, (float)indexOfSide * (360 / numOfSlide));
 	float3 pos = RotateAroundPoint(position + normal * radius, position, rr);
 
-	float t = fmod(index * 0.001 + _Time * 0.1, 1);
+	float t = fmod(indexOfSegment * 0.001 + _Time * 0.1, 1);
 	float tt = 1;// fmod(length(float3(0, 0, 0) - position.xyz) * 0.0001 + _Time * 0.05, 1);
 
 	if (t > 0.1)
