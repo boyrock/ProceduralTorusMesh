@@ -40,6 +40,7 @@
 				float3 normalDir : TEXCOORD1;
 				float3 posWorld : TEXCOORD2;
 				float3 color : TEXCOORD3;
+				float depth : TEXCOORD34;
 
 				LIGHTING_COORDS(2, 3)
 				UNITY_FOG_COORDS(4)
@@ -89,6 +90,7 @@
 
 				float4 vertex = float4(tv.pos, 1);
 				o.pos = UnityObjectToClipPos(vertex);
+				o.depth = o.pos.z;
 				o.posWorld = mul(unity_ObjectToWorld, vertex);
 				o.normalDir = UnityObjectToWorldNormal(tv.normal);
 				o.uv = tv.uv;
@@ -97,42 +99,55 @@
 				int indexOfSegment = idx / 10;
 
 				float tt = (sin(_Time.y * 0.5 + v.instanceId * 0.001 + (indexOfSegment / (_MaxSegment + 1)) * 0.001) + 1) * 0.5;
-				o.color = _ColorBuffer[tt * 99];
+				o.color = _ColorBuffer[o.uv.y * 99];
 
 				return o;
 			}
 			
 			fixed4 frag (v2f i) : SV_Target
 			{
-				float3 normalDirection = i.normalDir;
-				float3 viewDirection = normalize(_WorldSpaceCameraPos.xyz - i.posWorld.xyz);
-				float3 lightDirection = normalize(_WorldSpaceLightPos0.xyz);
-				float3 lightColor = 1;// _LightColor0.rgb;
+				fixed4 color;
+				float distanceToCenter;
+				float time = _Time.x * 100;
 
-				/// Lighting:
-				float attenuation = 1.0;// LIGHT_ATTENUATION(i);
-				float3 attenColor = attenuation * lightColor;
+				float xdist = i.uv.x;// +0.05;
+				float ydist = 1;
 
-				/// Diffuse:
-				float3 diffuseReflection = attenuation * lightColor * saturate(dot(normalDirection, lightDirection));
+				distanceToCenter = (xdist * xdist + ydist * ydist) * 100;
 
-				/// Specular:
-				float3 specularReflection = attenuation * _SpecColor * lightColor * saturate(dot(normalDirection, lightDirection)) * pow(saturate(dot(reflect(-lightDirection, normalDirection), viewDirection)), _Shininess);
+				color = sin(atan2(xdist, ydist) * 100 + time);
+				return color* float4(i.color * 1, 1);;// sqrt(i.depth);// *3 * color * // *i.uv.x;// ;// *float4(i.color * 1.5, 1);
 
-				/// RimLight:
-				float3 rimColor = _RimColor;
-				half rim = 1.0 - saturate(dot(normalize(viewDirection), normalDirection));
-				rim = pow(rim, _RimPower);
-				float3 rimLighting = attenuation * lightColor * saturate(dot(normalDirection, lightDirection)) * rim * rimColor.rgb;
 
-				/// FinalLight:
-				float3 lightFinal = rimLighting + diffuseReflection + specularReflection + UNITY_LIGHTMODEL_AMBIENT.xyz;
+				//float3 normalDirection = i.normalDir;
+				//float3 viewDirection = normalize(_WorldSpaceCameraPos.xyz - i.posWorld.xyz);
+				//float3 lightDirection = normalize(_WorldSpaceLightPos0.xyz);
+				//float3 lightColor = 1;// _LightColor0.rgb;
 
-				/// Final Color:
-				float3 finalColor = lightFinal * lerp(i.color * 1.3, i.color * 0.15, i.uv.x);// (i.color * i.uv.x);
-				fixed4 finalRGBA = fixed4(finalColor, 1);
+				///// Lighting:
+				//float attenuation = 1.0;// LIGHT_ATTENUATION(i);
+				//float3 attenColor = attenuation * lightColor;
 
-				return finalRGBA;
+				///// Diffuse:
+				//float3 diffuseReflection = attenuation * lightColor * saturate(dot(normalDirection, lightDirection));
+
+				///// Specular:
+				//float3 specularReflection = attenuation * _SpecColor * lightColor * saturate(dot(normalDirection, lightDirection)) * pow(saturate(dot(reflect(-lightDirection, normalDirection), viewDirection)), _Shininess);
+
+				///// RimLight:
+				//float3 rimColor = _RimColor;
+				//half rim = 1.0 - saturate(dot(normalize(viewDirection), normalDirection));
+				//rim = pow(rim, _RimPower);
+				//float3 rimLighting = attenuation * lightColor * saturate(dot(normalDirection, lightDirection)) * rim * rimColor.rgb;
+
+				///// FinalLight:
+				//float3 lightFinal = rimLighting + diffuseReflection + specularReflection + UNITY_LIGHTMODEL_AMBIENT.xyz;
+
+				///// Final Color:
+				//float3 finalColor = lightFinal * i.color;// i.color;// lerp(i.color * 1.3, i.color * 0.15, i.uv.x);// (i.color * i.uv.x);
+				//fixed4 finalRGBA = fixed4(finalColor, 1);
+
+				//return finalRGBA;
 			
 			}
 			ENDCG

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using System.Linq;
 
 public class GPUProceduralTorus : MonoBehaviour {
 
@@ -57,10 +58,11 @@ public class GPUProceduralTorus : MonoBehaviour {
 
     List<Color[]> colorsArr;
 
+    public PathMoveCamera pathMoveCamera;
     // Use this for initialization
     void Start ()
     {
-        length = 0.7f;
+        length = 1f;
         noiseFreq = 0f;
         radius = 0.2f;
         colorChangeSpeed = 0.1f;
@@ -112,6 +114,7 @@ public class GPUProceduralTorus : MonoBehaviour {
         int fromIndex = (int)t;
         int toIndex = (int)t + 1 >= colorsArr.Count ? 0 : (int)t + 1;
         float tt = t % 1.0f;
+
         colors = LerpColors(colorsArr[fromIndex], colorsArr[toIndex], tt);
     }
     Color[] LerpColors(Color[] from, Color[] to, float t)
@@ -184,7 +187,7 @@ public class GPUProceduralTorus : MonoBehaviour {
         initPosBuffer = new ComputeBuffer(initPositions.Length, Marshal.SizeOf(typeof(Vector3)));
         initPosBuffer.SetData(initPositions);
 
-        colorBuf = new ComputeBuffer(count, Marshal.SizeOf(typeof(Color)));
+        colorBuf = new ComputeBuffer(100, Marshal.SizeOf(typeof(Color)));
     }
 
     private void InitSegments()
@@ -194,11 +197,15 @@ public class GPUProceduralTorus : MonoBehaviour {
         cs.SetBuffer(initSegment_kernelIdx, "_SegmentBuffer", segmentBuffer);
         cs.Dispatch(initSegment_kernelIdx, count / 16 + (count % 16), 1, 1);
     }
-
     private void OnRenderObject()
     {
-        var color_t = Mathf.Repeat(Time.time * colorChangeSpeed, gradientColors.Length);
+        var color_t = 0;// Mathf.Repeat(Time.time * colorChangeSpeed, gradientColors.Length);
         ChangeColor(color_t);
+
+        //for (int i = 0; i < colors.Length; i++)
+        //{
+        //    Debug.Log(colors[i]);
+        //}
         colorBuf.SetData(colors);
 
         cs.SetFloat("_MaxSegment", maxSegmentNum);
@@ -212,6 +219,17 @@ public class GPUProceduralTorus : MonoBehaviour {
         cs.SetBuffer(updateVertex_kernelIdx, "_SegmentBuffer", segmentBuffer);
         cs.Dispatch(updateVertex_kernelIdx, totalVertexNum / 8 + (totalVertexNum % 8), 1, 1);
 
+        vertexBuffer.GetData(vertices);
+
+        //for (int i = 0; i < vertices.Length; i++)
+        //{
+        //    Debug.Log(string.Format("uv x:{0} y:{1}", vertices[i].uv.x, vertices[i].uv.y));
+        //    //Debug.Log("uv y:" + vertices[i].uv.y);
+        //}
+
+        segmentBuffer.GetData(segments);
+        pathMoveCamera.SetPath(segments.Select(s => s.pos).ToArray());
+
         cs.SetFloat("_NoiseFreq", noiseFreq);
         cs.SetBuffer(applyNoise_kernelIdx, "_SegmentBuffer", segmentBuffer);
         cs.Dispatch(applyNoise_kernelIdx, totalSegmentNum / 8 + (totalSegmentNum % 8), 1, 1);
@@ -220,6 +238,7 @@ public class GPUProceduralTorus : MonoBehaviour {
         mat.SetBuffer("_IndexBuffer", indexBuffer);
         mat.SetBuffer("_VertexBuffer", vertexBuffer);
         mat.SetBuffer("_ColorBuffer", colorBuf);
+
         mat.SetFloat("_MaxSegment", maxSegmentNum);
         mat.SetInt("_NumVertexOfPerTorus", vertices.Length / count);
         mat.SetInt("_NumIndexOfPerTorus", indices.Length);

@@ -49,33 +49,26 @@ void UpdateVertex (uint id : SV_DispatchThreadID)
 {
 	TorusVertex tv = _VertexBuffer[id];
 
-	int numOfSlide = _NumOfSlide;
+	float numOfSlide = _NumOfSlide - 1;
 
-	int indexOfSegment = id / numOfSlide;
-	int indexOfSide = id % numOfSlide;
+	int indexOfSegment = id / _NumOfSlide;
+	float indexOfSide = fmod(id, _NumOfSlide);
 
-	float radius = _Radius;
+	float radius = 5;// _Radius;
 
 	int index = _SegmentBuffer[indexOfSegment].index;
 	float3 position = _SegmentBuffer[indexOfSegment].pos;
 	float3 direction = _SegmentBuffer[indexOfSegment].direction;
 	float3 normal = _SegmentBuffer[indexOfSegment].normal;
 	
-	float4 rr = AngleAxis(direction, (float)indexOfSide * (360 / numOfSlide));
+	float4 rr = AngleAxis(direction, indexOfSide * (360 / numOfSlide));
 	float3 pos = RotateAroundPoint(position + normal * radius, position, rr);
 
 	float t = fmod(indexOfSegment * 0.001 + _Time * 0.1, 1);
 	float tt = 1;// fmod(length(float3(0, 0, 0) - position.xyz) * 0.0001 + _Time * 0.05, 1);
 
-	if (t > 0.1)
-	{
-		_VertexBuffer[id].uv = float2(1, 1);
-	}
-	else
-	{
-		_VertexBuffer[id].uv = float2(0, 0);
+	_VertexBuffer[id].uv = float2(indexOfSide / numOfSlide, fmod(indexOfSegment * 5, _MaxSegment) / _MaxSegment);
 
-	}
 	float ii = clamp(indexOfSegment % (_MaxSegment + 1) / _MaxSegment, 0, 1);
 	if (ii < _T)
 	{
